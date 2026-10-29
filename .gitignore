@@ -1,0 +1,132 @@
+# ------------------------------------------------------------------------------
+# Gemma AI / LocalAI-Chatbot .gitignore
+# Optimized for GitHub Repository Release & Enterprise Security
+# ------------------------------------------------------------------------------
+
+# --- Environment & Secrets (NEVER COMMIT SENSITIVE SECRETS) ---
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.secret
+*.secret.*
+.session_secret
+secret.key
+
+# --- Databases & Runtime State ---
+data/
+backups/
+logs/
+uploads/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.wal
+*.shm
+chat_history.db*
+*.rdb
+
+# --- Python Cache & Bytecode ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# --- Virtual Environments ---
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# --- Testing & Code Quality Caches ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# --- Build Outputs, Dist & Binaries ---
+dist/
+build/
+build_tmp/
+docker-dist/
+*.spec
+*.egg-info/
+*.egg
+build_system/dist/
+build_system/build_tmp/
+build_system/bundle.zip
+build_system/*.spec
+build_system/version_info.txt
+build_system/setup_wizard_bundled.py
+build_system/*.zip
+
+# Binary Executables & Large Archives
+*.exe
+*.dll
+*.so
+*.dylib
+*.zip
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+
+# --- Local Configuration & Wizards ---
+.wizard_config.json
+
+# --- IDEs & Text Editors ---
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# --- Operating System Artifacts ---
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+.fuse_hidden*
+.directory
+.Trash-*
+
+# --- Temporary / Scratch Files ---
+tmp/
+temp/
+scratch/
+*.tmp
+*.log

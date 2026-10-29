@@ -1,0 +1,68 @@
+{
+  "primitive": {
+    "color": {
+      "obsidian": {
+        "950": { "$type": "color", "$value": "#0d0e0c", "$description": "Deep carbon canvas" },
+        "900": { "$type": "color", "$value": "#161814", "$description": "Primary dark surface" },
+        "850": { "$type": "color", "$value": "#1f221c", "$description": "Elevated dark surface" }
+      },
+      "amber": {
+        "500": { "$type": "color", "$value": "#ff852b", "$description": "Atelier primary amber" },
+        "400": { "$type": "color", "$value": "#ffaa52", "$description": "Atelier warm amber highlight" },
+        "700": { "$type": "color", "$value": "#b84a0e", "$description": "High-contrast terracotta amber for light paper" }
+      },
+      "forest": {
+        "950": { "$type": "color", "$value": "#0c110d", "$description": "Deep moss canvas" },
+        "900": { "$type": "color", "$value": "#141c16", "$description": "Primary forest surface" },
+        "850": { "$type": "color", "$value": "#1c261f", "$description": "Elevated forest surface" },
+        "400": { "$type": "color", "$value": "#78c264", "$description": "Botanical sage accent" }
+      },
+      "nordic": {
+        "950": { "$type": "color", "$value": "#0b0f17", "$description": "Midnight slate canvas" },
+        "900": { "$type": "color", "$value": "#131924", "$description": "Primary nordic surface" },
+        "850": { "$type": "color", "$value": "#1b2332", "$description": "Elevated nordic surface" },
+        "400": { "$type": "color", "$value": "#52a8ff", "$description": "Precision azure accent" }
+      },
+      "parchment": {
+        "100": { "$type": "color", "$value": "#f4efe6", "$description": "Archival paper canvas" },
+        "50":  { "$type": "color", "$value": "#fbf8f2", "$description": "Elevated paper card" },
+        "200": { "$type": "color", "$value": "#e8e0d2", "$description": "Secondary paper surface" },
+        "900": { "$type": "color", "$value": "#1e1a15", "$description": "Espresso primary ink" },
+        "700": { "$type": "color", "$value": "#595248", "$description": "Secondary ink (≥5.8:1 contrast)" }
+      }
+    },
+    "space": {
+      "1": { "$type": "dimension", "$value": "4px" },
+      "2": { "$type": "dimension", "$value": "8px" },
+      "3": { "$type": "dimension", "$value": "12px" },
+      "4": { "$type": "dimension", "$value": "16px" },
+      "6": { "$type": "dimension", "$value": "24px" },
+      "8": { "$type": "dimension", "$value": "32px" }
+    },
+    "radius": {
+      "sm": { "$type": "dimension", "$value": "8px" },
+      "md": { "$type": "dimension", "$value": "12px" },
+      "lg": { "$type": "dimension", "$value": "16px" },
+      "xl": { "$type": "dimension", "$value": "22px" },
+      "full": { "$type": "dimension", "$value": "9999px" }
+    }
+  },
+  "semantic": {
+    "color": {
+      "surface": {
+        "canvas": { "$type": "color", "$value": "{primitive.color.obsidian.950}", "$description": "Page canvas" },
+        "default": { "$type": "color", "$value": "{primitive.color.obsidian.900}", "$description": "Primary panel surface" },
+        "elevated": { "$type": "color", "$value": "{primitive.color.obsidian.850}", "$description": "Secondary/interactive surface" }
+      },
+      "text": {
+        "default": { "$type": "color", "$value": "#f4f0e8", "$description": "Primary body copy (≥14:1 contrast)" },
+        "subtle": { "$type": "color", "$value": "#a5a89d", "$description": "Secondary copy (≥6.8:1 contrast)" },
+        "muted": { "$type": "color", "$value": "#96998e", "$description": "Muted metadata copy (≥5.4:1 contrast)" }
+      },
+      "action": {
+        "primary": { "$type": "color", "$value": "{primitive.color.amber.500}", "$description": "Primary interactive accent" },
+        "hover": { "$type": "color", "$value": "{primitive.color.amber.400}", "$description": "Primary hover state" }
+      }
+    }
+  }
+}

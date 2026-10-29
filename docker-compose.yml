@@ -1,0 +1,97 @@
+# ==============================================================================
+# Gemma AI — Docker Compose Orchestration
+# ==============================================================================
+#
+# USAGE EXAMPLES:
+#   1) Standard (Connects to existing Ollama on Host):
+#      docker compose up -d
+#
+#   2) All-in-One (Runs both Web Chat AND Ollama in containers):
+#      docker compose --profile with-ollama up -d
+#
+#   3) With LINE Bot Webhook:
+#      docker compose --profile with-line up -d
+#
+# ==============================================================================
+
+services:
+  webchat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gemma-ai-chatbot:latest
+    container_name: gemma-ai-webchat
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      # If using Ollama on Host machine, use host.docker.internal
+      # If using containerized Ollama (with-ollama profile), change to http://ollama:11434
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-gemma4:12b}
+      - WEB_PORT=8001
+      - DB_PATH=/app/data/chat_history.db
+      - APP_BACKUP_DIR=/app/backups
+      - APP_LOG_DIR=/app/logs
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    extra_hosts:
+      # Enables container to reach services running on host OS
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # Optional: LINE Bot Webhook Server
+  linechat:
+    image: gemma-ai-chatbot:latest
+    container_name: gemma-ai-linechat
+    restart: unless-stopped
+    command: ["uvicorn", "linechat:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - DB_PATH=/app/data/chat_history.db
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    profiles:
+      - with-line
+
+  # Optional: Companion Ollama Container (All-in-One deployment)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: gemma-ai-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_storage:/root/.ollama
+    # For NVIDIA GPU acceleration on target host, uncomment the deploy section:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    profiles:
+      - with-ollama
+
+volumes:
+  ollama_storage:
+    name: gemma_ai_ollama_storage

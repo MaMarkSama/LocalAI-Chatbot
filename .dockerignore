@@ -1,0 +1,77 @@
+# ------------------------------------------------------------------------------
+# Docker Build Ignore (.dockerignore)
+# Keep image lean, fast to build, and free of sensitive local files
+# ------------------------------------------------------------------------------
+
+# Git
+.git
+.gitignore
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.secret
+.session_secret
+
+# Local Databases, Logs & Backups
+data/
+logs/
+backups/
+uploads/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.wal
+*.shm
+
+# Python Cache & Virtual Environments
+__pycache__
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.venv
+venv
+env
+ENV
+
+# Testing & Quality Caches
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.coverage
+htmlcov
+
+# Build Outputs & Binary Installers
+dist/
+build/
+build_tmp/
+build_system/dist/
+build_system/build_tmp/
+*.spec
+*.exe
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# OS & Editor Artifacts
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode
+.idea
+*.swp
+*.swo
+
+# Temporary Files
+tmp/
+temp/
+scratch/
+*.log
