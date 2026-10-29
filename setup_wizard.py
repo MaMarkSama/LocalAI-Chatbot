@@ -13,7 +13,23 @@ import tkinter.scrolledtext as scrolledtext
 import subprocess, threading, sys, os, shutil, webbrowser, json
 from datetime import datetime
 
-from gemma_app.runtime import get_python_exe
+# ตรวจสอบและเพิ่มไดเรกทอรีของโปรเจกต์ลงใน sys.path
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if _CURRENT_DIR not in sys.path:
+    sys.path.insert(0, _CURRENT_DIR)
+
+try:
+    from gemma_app.runtime import get_python_exe
+except Exception:
+    def get_python_exe() -> str:
+        if getattr(sys, 'frozen', False):
+            return (
+                shutil.which('python')
+                or shutil.which('python3')
+                or shutil.which('py')
+                or 'python'
+            )
+        return sys.executable
 
 PYTHON_EXE = get_python_exe()
 
@@ -54,8 +70,9 @@ class SetupWizard:
         self.steps = [
             ("ยินดีต้อนรับ",        self.step_welcome),
             ("เลือกโฟลเดอร์",       self.step_path),
+            ("ตรวจเช็กระบบ",        self.step_doctor),
             ("AI Model",             self.step_model),
-            ("ติดตั้ง Dependencies", self.step_deps),
+            ("ติดตั้ง Packages",     self.step_deps),
             ("Ollama & Model",       self.step_ollama),
             ("ตั้งค่า Line Bot",     self.step_line),
             ("เสร็จสิ้น",            self.step_done),
@@ -315,7 +332,96 @@ class SetupWizard:
         if path:
             self.install_dir.set(os.path.join(path, "GemmaAI"))
 
-    # ── Step 2: Model Selection ───────────────────────────────────────────
+    # ── Step 2: System & Framework Doctor ────────────────────────────────
+    def step_doctor(self):
+        self.H1("ตรวจเช็กระบบและ Framework (System Doctor)")
+        self.Sub("ตรวจสอบความพร้อมของระบบปฏิบัติการ, ฮาร์ดแวร์, Framework และ AI Engine")
+
+        summary_card = self.Card()
+        self.doc_summary_lbl = tk.Label(
+            summary_card, text="กำลังสแกนระบบและตรวจสอบความพร้อม...",
+            bg=SURFACE, fg=ACCENT, font=("Segoe UI", 10, "bold")
+        )
+        self.doc_summary_lbl.pack(anchor="w")
+
+        self.doc_box = self.LogBox(height=11)
+
+        btn_row = tk.Frame(self.content, bg=BG)
+        btn_row.pack(fill="x", pady=(8, 0))
+
+        self.btn_autofix = self.Btn(
+            btn_row, "🔧 ซ่อมแซมและติดตั้งตัวที่ขาดหายอัตโนมัติ", self._run_doctor_autofix, color="#166534"
+        )
+        self.Btn(btn_row, "🔄 สแกนใหม่", self._run_doctor_scan, color=SURFACE2, fg=TEXT)
+
+        self._run_doctor_scan()
+
+    def _run_doctor_scan(self):
+        self.doc_box.config(state="normal")
+        self.doc_box.delete("1.0", "end")
+        self.log(self.doc_box, "กำลังเริ่มการตรวจเช็กระบบรอบด้าน...", "m")
+
+        def run():
+            try:
+                from system_doctor import SystemDoctor
+                target_dir = Path(self.install_dir.get()) if os.path.exists(self.install_dir.get()) else BASE_DIR
+                doc = SystemDoctor(target_dir)
+                report = doc.run_all()
+
+                self.doc_box.config(state="normal")
+                self.doc_box.delete("1.0", "end")
+
+                current_cat = ""
+                for r in report["results"]:
+                    if r["category"] != current_cat:
+                        current_cat = r["category"]
+                        self.log(self.doc_box, f"\n=== {current_cat} ===", "c")
+
+                    tag = "✓" if r["status"] == "PASS" else ("⚠" if r["status"] == "WARN" else "✗")
+                    color_tag = "g" if r["status"] == "PASS" else ("y" if r["status"] == "WARN" else "r")
+                    self.log(self.doc_box, f"{tag} {r['name']}: {r['details']}", color_tag)
+                    if r["status"] != "PASS" and r.get("fix_hint"):
+                        self.log(self.doc_box, f"   ↳ แนะนำ: {r['fix_hint']}", "y")
+
+                def update_summary():
+                    if report["ok"]:
+                        self.doc_summary_lbl.config(
+                            text=f"✓ ระบบและ Framework พร้อมใช้งานสมบูรณ์! (ผ่าน {report['passes']} รายการ)",
+                            fg=GREEN
+                        )
+                    else:
+                        self.doc_summary_lbl.config(
+                            text=f"⚠ พบรายการที่ต้องเตรียมความพร้อม {report['fails']} รายการ (สามารถกดปุ่มซ่อมแซมด้านล่างได้)",
+                            fg=RED
+                        )
+                self.root.after(0, update_summary)
+            except Exception as e:
+                self.log(self.doc_box, f"\n✗ เกิดข้อผิดพลาดในการตรวจสอบ: {e}", "r")
+
+        threading.Thread(target=run, daemon=True).start()
+
+    def _run_doctor_autofix(self):
+        self.btn_autofix.config(state="disabled", text="กำลังติดตั้ง/ซ่อมแซม...")
+        self.log(self.doc_box, "\n--- เริ่มกระบวนการติดตั้งและซ่อมแซมตัวที่ขาดหาย ---", "y")
+
+        def run():
+            try:
+                from system_doctor import SystemDoctor
+                target_dir = Path(self.install_dir.get()) if os.path.exists(self.install_dir.get()) else BASE_DIR
+                doc = SystemDoctor(target_dir)
+                def on_prog(msg):
+                    self.log(self.doc_box, f"▸ {msg}", "m")
+                doc.auto_fix(on_progress=on_prog)
+                self.log(self.doc_box, "\n✓ ขั้นตอนเสร็จสิ้น กำลังสแกนระบบซ้ำอีกครั้ง...", "g")
+                self._run_doctor_scan()
+            except Exception as e:
+                self.log(self.doc_box, f"\n✗ การซ่อมแซมล้มเหลว: {e}", "r")
+            finally:
+                self.root.after(0, lambda: self.btn_autofix.config(state="normal", text="🔧 ซ่อมแซมและติดตั้งตัวที่ขาดหายอัตโนมัติ"))
+
+        threading.Thread(target=run, daemon=True).start()
+
+    # ── Step 3: Model Selection ───────────────────────────────────────────
     def step_model(self):
         self.H1("เลือก AI Model")
         self.Sub("เลือก model ที่เหมาะกับ RAM และความต้องการของคุณ")
@@ -545,7 +651,8 @@ class SetupWizard:
                     bg=SURFACE, fg=RED, font=("Segoe UI", 10, "bold")).pack(anchor="w")
             row = tk.Frame(status, bg=SURFACE)
             row.pack(fill="x", pady=(6, 0))
-            self.Btn(row, "⬇ ดาวน์โหลด Ollama",
+            self.Btn(row, "⚡ ติดตั้ง Ollama อัตโนมัติ", self._auto_install_ollama, color="#166534")
+            self.Btn(row, "⬇ ดาวน์โหลดจากเว็บ",
                     lambda: webbrowser.open("https://ollama.com/download"), color=ACCENT)
             self.Btn(row, "ตรวจสอบใหม่", self._recheck_ollama, color=SURFACE2, fg=TEXT)
 
@@ -586,6 +693,24 @@ class SetupWizard:
             self.btn_next.config(state="normal")
         else:
             self.btn_next.config(state="disabled")
+
+    def _auto_install_ollama(self):
+        self.log(self.ollama_log, "กำลังเริ่มดาวน์โหลดและติดตั้ง Ollama อัตโนมัติ...", "y")
+        def run():
+            if sys.platform == "win32":
+                try:
+                    proc = subprocess.run(
+                        ["winget", "install", "Ollama.Ollama", "--accept-source-agreements", "--accept-package-agreements", "-h"],
+                        capture_output=True, text=True, timeout=180
+                    )
+                    if proc.returncode == 0:
+                        self.log(self.ollama_log, "✓ ติดตั้ง Ollama สำเร็จเรียบร้อย!", "g")
+                        self.root.after(1000, self._recheck_ollama)
+                        return
+                except Exception:
+                    pass
+            webbrowser.open("https://ollama.com/download")
+        threading.Thread(target=run, daemon=True).start()
 
     def _recheck_ollama(self):
         flags = {"creationflags": subprocess.CREATE_NO_WINDOW} if sys.platform=="win32" else {}
@@ -762,15 +887,15 @@ class SetupWizard:
         os.makedirs(dest, exist_ok=True)
 
         # ไฟล์ที่ต้องคัดลอก
-        files_to_copy = ["linechat.py","webchat.py",
-        "file_processor.py","conversation.py",
-        "database.py","launcher.py","run.py",
-        "requirements.txt",".env.example",
-        "start.bat","install.bat",
-        "security.py","auth_middleware.py",
-        "user_manager.py","memory_manager.py",
-        "message_turbovec.py", "web_searcher.py", "usage_tracker.py","webchat_ui.html","admin_ui.html",
-        "setup_wizard.py","README.md","PACKAGING.md","PERFORMANCE.md"]
+        files_to_copy = [
+            "linechat.py", "webchat.py", "smart_router.py", "enterprise.py",
+            "file_processor.py", "conversation.py", "database.py", "launcher.py", "run.py",
+            "requirements.txt", ".env.example", "start.bat", "install.bat", "doctor.bat", "system_doctor.py",
+            "security.py", "auth_middleware.py", "user_manager.py", "memory_manager.py",
+            "message_turbovec.py", "web_searcher.py", "usage_tracker.py", "webchat_ui.html", "admin_ui.html",
+            "setup_wizard.py", "README.md", "PACKAGING.md", "PERFORMANCE.md",
+            "Dockerfile", "docker-compose.yml", "docker-run.bat", "docker-run.sh"
+        ]
     
 
         copied, skipped = [], []
@@ -786,17 +911,18 @@ class SetupWizard:
             else:
                 skipped.append(f"{fname} (ไม่พบ)")
 
-        package_src = os.path.join(BASE_DIR, "gemma_app")
-        package_dst = os.path.join(dest, "gemma_app")
-        if os.path.isdir(package_src):
-            try:
-                shutil.copytree(
-                    package_src, package_dst, dirs_exist_ok=True,
-                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
-                )
-                copied.append("gemma_app/")
-            except Exception as e:
-                skipped.append(f"gemma_app/ ({e})")
+        for dir_name in ("gemma_app", "skill", "tokens"):
+            package_src = os.path.join(BASE_DIR, dir_name)
+            package_dst = os.path.join(dest, dir_name)
+            if os.path.isdir(package_src):
+                try:
+                    shutil.copytree(
+                        package_src, package_dst, dirs_exist_ok=True,
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+                    )
+                    copied.append(f"{dir_name}/")
+                except Exception as e:
+                    skipped.append(f"{dir_name}/ ({e})")
 
         return copied, skipped
 

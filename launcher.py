@@ -12,7 +12,22 @@ import webbrowser
 import socket
 from datetime import datetime
 
-from gemma_app.runtime import get_python_exe
+_LAUNCHER_DIR = os.path.dirname(os.path.abspath(__file__))
+if _LAUNCHER_DIR not in sys.path:
+    sys.path.insert(0, _LAUNCHER_DIR)
+
+try:
+    from gemma_app.runtime import get_python_exe
+except Exception:
+    def get_python_exe() -> str:
+        if getattr(sys, "frozen", False):
+            return (
+                shutil.which("python")
+                or shutil.which("python3")
+                or shutil.which("py")
+                or "python"
+            )
+        return sys.executable
 
 PYTHON_EXE = get_python_exe()
 

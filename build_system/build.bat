@@ -27,6 +27,9 @@ if %errorlevel% neq 0 (
     pause & exit /b 1
 )
 
+:: Terminate running installer instances to prevent file lock PermissionError
+taskkill /F /IM GemmaAI_Setup.exe >nul 2>&1
+
 :: Install build tools
 color 0E
 echo  [ * ] Installing PyInstaller and build tools...

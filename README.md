@@ -202,9 +202,23 @@ ADMIN_PASSWORD=YourStrongPasswordHere
 
 ---
 
-## 🧪 การทดสอบระบบ (Automated Tests)
+## 🧪 การทดสอบระบบและการตรวจสุขภาพ Framework (Self-Check & Diagnostics)
 
-โปรเจกต์มีชุดทดสอบครอบคลุมทั้ง API, IDOR Access Control, Security Headers, Zip Bomb Guard, Database, และ SSE Streaming:
+โปรเจกต์มีระบบ **System Doctor** ตรวจสอบความพร้อมของระบบและ Framework ครอบคลุม 43 รายการย่อย:
+
+```powershell
+# รันการตรวจสุขภาพระบบและ Framework ทั้งหมด
+doctor.bat
+# หรือรันผ่าน Python:
+python system_doctor.py
+
+# สั่งให้ระบบซ่อมแซมและติดตั้งตัวที่ขาดหายอัตโนมัติ (Zero-to-Hero Auto-Fix)
+doctor.bat --fix
+# หรือ:
+python system_doctor.py --fix
+```
+
+นอกจากนี้ยังมีชุดทดสอบ Unit & Regression Tests ครอบคลุมทั้ง API, IDOR Access Control, Security Headers, Zip Bomb Guard, Database, และ SSE Streaming:
 
 ```powershell
 python -m pip install -r requirements-dev.txt

@@ -45,6 +45,8 @@ BUILD_CONFIG = {
         ".env.example",
         "start.bat",
         "install.bat",
+        "doctor.bat",
+        "system_doctor.py",
         "setup_wizard.py",
         "security.py",
         "auth_middleware.py",
@@ -55,6 +57,14 @@ BUILD_CONFIG = {
         "usage_tracker.py",
         "webchat_ui.html",
         "admin_ui.html",
+        "smart_router.py",
+        "enterprise.py",
+        "skill",
+        "tokens",
+        "Dockerfile",
+        "docker-compose.yml",
+        "docker-run.bat",
+        "docker-run.sh",
         "gemma_app",
         "README.md",
         "PACKAGING.md",
@@ -83,6 +93,13 @@ SENSITIVE_BUNDLE_NAMES = {
 }
 
 
+if sys.platform == "win32" and sys.stdout and hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+
 def log(msg, color=""):
     colors = {
         "green":  "\033[92m",
@@ -92,7 +109,30 @@ def log(msg, color=""):
         "":       "",
     }
     reset = "\033[0m"
-    print(f"{colors.get(color,'')}{msg}{reset}")
+    try:
+        print(f"{colors.get(color,'')}{msg}{reset}")
+    except UnicodeEncodeError:
+        safe = msg.encode("ascii", errors="replace").decode("ascii")
+        print(f"{colors.get(color,'')}{safe}{reset}")
+
+
+def check_and_kill_running_exe():
+    exe_name = f"{BUILD_CONFIG['app_name']}.exe"
+    exe_path = DIST / exe_name
+    if sys.platform == "win32":
+        try:
+            subprocess.run(["taskkill", "/F", "/IM", exe_name], capture_output=True)
+        except Exception:
+            pass
+    if exe_path.exists():
+        try:
+            exe_path.unlink()
+        except PermissionError:
+            log(f"\n✗ ไม่สามารถเขียนทับไฟล์ {exe_name} ได้ เนื่องจากมีโปรแกรมกำลังเปิดใช้งานอยู่", "red")
+            log("  กรุณาปิด GemmaAI_Setup.exe ใน Task Manager แล้วลองใหม่อีกครั้ง", "yellow")
+            sys.exit(1)
+        except Exception:
+            pass
 
 
 def check_source_dir():
@@ -254,6 +294,15 @@ _INSTALL_SOURCE = os.path.join(
 )
 _extract_bundle_if_needed(_INSTALL_SOURCE)
 
+# Ensure extracted source and script location are in sys.path so modules like gemma_app can be imported
+for _p in (
+    _INSTALL_SOURCE,
+    os.path.dirname(os.path.abspath(__file__)),
+    os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")),
+):
+    if os.path.exists(_p) and _p not in sys.path:
+        sys.path.insert(0, _p)
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  ส่วน setup_wizard.py ต้นฉบับเริ่มต้นด้านล่าง (ถูก patch โดย build.py)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -320,6 +369,10 @@ def build_exe():
         f"--distpath={DIST}",
         f"--workpath={BASE / 'build_tmp'}",
         f"--specpath={BASE}",
+        f"--paths={SRC}",
+        "--hidden-import=gemma_app",
+        "--hidden-import=gemma_app.runtime",
+        "--hidden-import=gemma_app.config",
     ]
 
     if cfg["onefile"]:
@@ -400,6 +453,9 @@ def main():
     log(f"  Source : {SRC}", "cyan")
     log(f"  Output : {DIST}", "cyan")
     log("=" * 56, "cyan")
+
+    # 0. ตรวจสอบและปิด .exe ที่อาจรันค้างอยู่
+    check_and_kill_running_exe()
 
     # 1. ตรวจสอบ source_dir
     check_source_dir()
