@@ -6,7 +6,9 @@ import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
 import subprocess
 import threading
+import sys
 import os
+import shutil
 import time
 import webbrowser
 import socket

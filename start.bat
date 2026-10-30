@@ -59,6 +59,12 @@ if exist "launcher.py" (
     color 0A
     echo  [ + ] กำลังเปิด Gemma AI Control Panel...
     python launcher.py
+    if errorlevel 1 (
+        color 0C
+        echo.
+        echo  [ X ] เกิดข้อผิดพลาดในการรัน launcher.py
+        pause
+    )
 ) else (
     color 0C
     echo  [ X ] Error: launcher.py not found!
